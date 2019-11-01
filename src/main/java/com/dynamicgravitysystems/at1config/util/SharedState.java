@@ -1,21 +1,22 @@
 package com.dynamicgravitysystems.at1config.util;
 
-import com.dynamicgravitysystems.common.gravity.MarineSensorCalibration;
+import com.dynamicgravitysystems.common.gravity.SensorCalibration;
 
 import java.util.Optional;
 
 public enum SharedState {
     STATE;
 
-    private MarineSensorCalibration calibration;
+    private SensorCalibration calibration;
 
-    SharedState() {}
+    SharedState() {
+    }
 
-    public void setCalibration(MarineSensorCalibration calibration) {
+    public void setCalibration(SensorCalibration calibration) {
         this.calibration = calibration;
     }
 
-    public Optional<MarineSensorCalibration> getCalibration() {
+    public Optional<SensorCalibration> getCalibration() {
         return Optional.ofNullable(calibration);
     }
 }

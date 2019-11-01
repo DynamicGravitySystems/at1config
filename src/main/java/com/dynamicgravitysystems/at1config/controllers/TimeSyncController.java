@@ -5,7 +5,7 @@ import com.dynamicgravitysystems.at1config.services.SerialMessage;
 import com.dynamicgravitysystems.at1config.services.SerialServiceManager;
 import com.dynamicgravitysystems.at1config.util.BaseController;
 import com.dynamicgravitysystems.at1config.util.SharedState;
-import com.dynamicgravitysystems.common.gravity.MarineDataField;
+import com.dynamicgravitysystems.common.gravity.DataField;
 import com.dynamicgravitysystems.common.gravity.MarineGravityReading;
 import com.dynamicgravitysystems.common.gravity.MarineSensorCalibration;
 import io.reactivex.Observable;
@@ -113,8 +113,8 @@ public class TimeSyncController extends BaseController {
                         .doOnNext(reading -> {
                             final double elecTempValue = state.getCalibration()
                                     .orElse(MarineSensorCalibration.identity())
-                                    .getFieldCalibration(MarineDataField.ELEC_TEMP)
-                                    .apply(reading.getValue(MarineDataField.ELEC_TEMP));
+                                    .getFieldCalibration(DataField.ELEC_TEMP)
+                                    .apply(reading.getValue(DataField.ELEC_TEMP));
                             Platform.runLater(() -> {
                                 elecTemp.setValue(elecTempValue);
                                 elecTempSeries.getData().add(new XYChart.Data<>(ZonedDateTime.now().toEpochSecond(), elecTempValue));
@@ -147,10 +147,10 @@ public class TimeSyncController extends BaseController {
 
         serialManager.sendCommand(MarineSensorCommand.FIND_FREQ_OFFSET);
         subscriptions.add(baseSource
-                .skipWhile(reading -> reading.getIntValue(MarineDataField.ADJUSTMENT_ENABLED) != 1)
+                .skipWhile(reading -> reading.getIntValue(DataField.ADJUSTMENT_ENABLED) != 1)
                 .timeout(timeoutSeconds, TimeUnit.SECONDS)
                 .doOnNext(next -> Platform.runLater(() -> syncModeEnabled.set(true)))
-                .takeUntil(reading -> reading.getIntValue(MarineDataField.ADJUSTMENT_ENABLED) == 0)
+                .takeUntil(reading -> reading.getIntValue(DataField.ADJUSTMENT_ENABLED) == 0)
                 .subscribe(this::updateProperties,
                         error -> {
                             if (error instanceof TimeoutException) {
@@ -178,7 +178,7 @@ public class TimeSyncController extends BaseController {
         syncStatusStyle.setValue("");
         serialManager.sendCommand(MarineSensorCommand.DISPLAY_FREQ_OFFSET);
         subscriptions.add(baseSource
-                .skipWhile(reading -> reading.getIntValue(MarineDataField.ADJUSTMENT_ENABLED) != 0)
+                .skipWhile(reading -> reading.getIntValue(DataField.ADJUSTMENT_ENABLED) != 0)
                 .timeout(timeoutSeconds, TimeUnit.SECONDS)
                 .doOnNext(next -> Platform.runLater(() -> syncModeEnabled.set(true)))
                 .subscribe(this::updateProperties,
@@ -201,13 +201,13 @@ public class TimeSyncController extends BaseController {
 
     private void updateProperties(final MarineGravityReading reading) {
         final long time = ZonedDateTime.now().toEpochSecond();
-        final double tdiff = reading.getValue(MarineDataField.TIME_DIFF);
-        final double fderiv = reading.getValue(MarineDataField.FREQ_DERIVATIVE);
+        final double tdiff = reading.getValue(DataField.TIME_DIFF);
+        final double fderiv = reading.getValue(DataField.FREQ_DERIVATIVE);
 
         Platform.runLater(() -> {
             timeDifference.setValue((int) tdiff);
             frequencyDerivative.setValue((int) fderiv);
-            adjustmentSteps.set(reading.getIntValue(MarineDataField.ADJUSTMENT_STEPS));
+            adjustmentSteps.set(reading.getIntValue(DataField.ADJUSTMENT_STEPS));
             timeDiffSeries.getData().add(new XYChart.Data<>(time, tdiff));
             freqDerivativeSeries.getData().add(new XYChart.Data<>(time, fderiv));
         });

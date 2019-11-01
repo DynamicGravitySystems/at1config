@@ -18,7 +18,6 @@ import javafx.application.Platform;
 import javafx.beans.binding.Bindings;
 import javafx.beans.binding.StringBinding;
 import javafx.beans.property.BooleanProperty;
-import javafx.beans.property.SimpleBooleanProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.css.PseudoClass;
@@ -117,7 +116,7 @@ public class MainWindowController extends BaseController {
         connectedGravity.addListener((property, previous, current) -> {
             lblGravityStatus.pseudoClassStateChanged(SUCCESS, current);
             lblGravityStatus.pseudoClassStateChanged(DANGER, !current);
-            if(current)
+            if (current)
                 btnToggleGravity.setText("Disconnect");
             else
                 btnToggleGravity.setText("Connect");
@@ -134,7 +133,7 @@ public class MainWindowController extends BaseController {
         connectedGPS.addListener((property, previous, current) -> {
             lblGpsStatus.pseudoClassStateChanged(SUCCESS, current);
             lblGpsStatus.pseudoClassStateChanged(DANGER, !current);
-            if(current)
+            if (current)
                 btnToggleGPS.setText("Disconnect");
             else
                 btnToggleGPS.setText("Connect");
