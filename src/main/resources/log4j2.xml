@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<Configuration status="WARN" monitorInterval="30">
+    <Properties>
+        <Property name="DEFAULT_PATTERN">
+            %d{yyyy-MM-dd HH:mm:ss} %5p -- [%15.15t] %-40.40c{1.} : %m%n%ex
+        </Property>
+    </Properties>
+    <Appenders>
+        <Console name="STDOUT" target="SYSTEM_OUT" follow="true">
+            <PatternLayout pattern="${DEFAULT_PATTERN}" />
+        </Console>
+        <RollingFile name="rollingFile" fileName="logs/at1config.log" filePattern="logs/at1config.%d{MM-dd-yyyy}.log">
+            <PatternLayout pattern="${DEFAULT_PATTERN}" />
+            <Policies>
+                <TimeBasedTriggeringPolicy />
+            </Policies>
+            <DefaultRolloverStrategy max="15" />
+        </RollingFile>
+    </Appenders>
+    <Loggers>
+        <Root level="trace">
+            <AppenderRef ref="STDOUT" />
+        </Root>
+        <Logger name="com.dynamicgravitysystems" level="debug" >
+            <AppenderRef ref="rollingFile" />
+        </Logger>
+    </Loggers>
+</Configuration>

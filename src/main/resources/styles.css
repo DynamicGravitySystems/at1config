@@ -1,0 +1,49 @@
+.md {
+    -fx-min-height: 32;
+    -fx-max-height: 32;
+    -fx-font-size: 14;
+}
+
+.lg {
+    -fx-min-height: 42;
+    -fx-max-height: 42;
+    -fx-font-size: 16;
+}
+
+.wide {
+    -fx-min-width: 150;
+}
+
+.success {
+    -fx-text-fill: #33cc33;
+    -fx-font-weight: bold;
+}
+
+.danger {
+    -fx-text-fill: #cc0000;
+    -fx-font-weight: bold;
+}
+
+.center {
+    -fx-text-alignment: center;
+}
+
+.border {
+    -fx-border-width: 2;
+    -fx-border-color: #8d8e8f;
+    -fx-border-radius: 2;
+}
+
+.p1 {
+    -fx-padding: 2;
+}
+
+Label:danger {
+    -fx-text-fill: #cc0000;
+    -fx-font-weight: bold;
+}
+
+Label:success {
+    -fx-text-fill: #33cc33;
+    -fx-font-weight: bold;
+}
