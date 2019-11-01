@@ -31,7 +31,7 @@ public class SerialPortRunnable implements Runnable {
 
     }
 
-    public Observable<SerialMessage> getMessageSubject() {
+    Observable<SerialMessage> getMessageSubject() {
         return messageSubject;
     }
 
@@ -41,8 +41,7 @@ public class SerialPortRunnable implements Runnable {
             messageSubject.onNext(SerialMessage.connected());
         else {
             log.error("Failed to open serial port");
-            cleanup();
-            return;
+            stopped.set(true);
         }
 
         String currentLine;

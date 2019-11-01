@@ -4,6 +4,7 @@ public class SerialMessage {
 
     public enum SerialEvent {
         CONNECTED,
+        FAILED,
         TIMEOUT,
         RECEIVED,
         DISCONNECTED
@@ -29,6 +30,10 @@ public class SerialMessage {
         return value;
     }
 
+    public boolean hasValue() {
+        return event == SerialEvent.RECEIVED;
+    }
+
     public static SerialMessage ofValue(String value) {
         return new SerialMessage(SerialEvent.RECEIVED, value);
     }
@@ -39,6 +44,10 @@ public class SerialMessage {
 
     static SerialMessage connected() {
         return new SerialMessage(SerialEvent.CONNECTED);
+    }
+
+    static SerialMessage failed() {
+        return new SerialMessage(SerialEvent.FAILED);
     }
 
     static SerialMessage disconnected() {
