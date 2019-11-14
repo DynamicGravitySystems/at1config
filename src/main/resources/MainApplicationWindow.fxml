@@ -43,6 +43,16 @@
                         <KeyCodeCombination alt="UP" code="M" control="DOWN" meta="UP" shift="UP" shortcut="UP" />
                      </accelerator>
                   </MenuItem>
+                  <MenuItem fx:id="menuItemSettings" mnemonicParsing="false" text="Application Settings">
+                     <accelerator>
+                        <KeyCodeCombination alt="DOWN" code="S" control="DOWN" meta="UP" shift="UP" shortcut="UP" />
+                     </accelerator>
+                  </MenuItem>
+              </items>
+            </Menu>
+            <Menu mnemonicParsing="false" text="Tools">
+              <items>
+                <MenuItem fx:id="menuToolsTimeSync" mnemonicParsing="false" onAction="#enterSyncMode" text="Time Synchronization" />
               </items>
             </Menu>
                 <Menu mnemonicParsing="false" text="Help">
@@ -229,7 +239,7 @@
                             <TextArea fx:id="dataGravity" editable="false" prefHeight="347.0" prefWidth="790.0" VBox.vgrow="ALWAYS" />
                         <ButtonBar prefHeight="40.0" prefWidth="200.0">
                           <buttons>
-                            <Button mnemonicParsing="false" text="Log to File" />
+                            <Button mnemonicParsing="false" onAction="#logGravityToFile" text="Log to File" />
                               <Button fx:id="btnClearGravity" mnemonicParsing="false" text="Clear" />
                           </buttons>
                            <VBox.margin>

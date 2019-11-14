@@ -1,11 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
+<?import java.lang.String?>
 <?import java.net.URL?>
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.chart.LineChart?>
 <?import javafx.scene.chart.NumberAxis?>
 <?import javafx.scene.control.Button?>
 <?import javafx.scene.control.CheckBox?>
+<?import javafx.scene.control.ChoiceBox?>
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.control.TextField?>
 <?import javafx.scene.layout.AnchorPane?>
@@ -15,6 +17,7 @@
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.RowConstraints?>
 <?import javafx.scene.layout.VBox?>
+<?import javafx.scene.text.Font?>
 
 <BorderPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="600.0" minWidth="-Infinity" prefHeight="600.0" prefWidth="800.0" xmlns="http://javafx.com/javafx/11.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.dynamicgravitysystems.at1config.controllers.TimeSyncController">
    <center>
@@ -37,6 +40,13 @@
                      </children>
                   </HBox>
                   <Button layoutX="137.0" layoutY="5.0" mnemonicParsing="false" onAction="#clearChart" text="Clear Chart" AnchorPane.rightAnchor="0.0" />
+                  <HBox alignment="CENTER" layoutX="342.0" layoutY="5.0" spacing="5.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="300.0" AnchorPane.rightAnchor="200.0" AnchorPane.topAnchor="0.0">
+                     <children>
+                        <Label text="Plot Width (Minutes)" />
+                        <TextField fx:id="txtPlotWidth" prefWidth="50.0" />
+                        <Button fx:id="btnSetPlotWidth" mnemonicParsing="false" onAction="#setChartWidth" text="Set" />
+                     </children>
+                  </HBox>
                </children>
                <padding>
                   <Insets left="10.0" right="10.0" />
@@ -46,29 +56,52 @@
       </VBox>
    </center>
    <bottom>
-      <HBox alignment="CENTER" minHeight="150.0" BorderPane.alignment="CENTER">
+      <HBox alignment="CENTER" minHeight="150.0" spacing="5.0" BorderPane.alignment="CENTER">
          <children>
-            <VBox>
+            <VBox alignment="TOP_CENTER" spacing="10.0">
                <children>
-                  <CheckBox fx:id="cbTimeDiff" mnemonicParsing="false" text="Time Difference" />
-                  <CheckBox fx:id="cbFreqDeriv" mnemonicParsing="false" text="Frequency Derivative" />
-                  <CheckBox fx:id="cbElecTemp" mnemonicParsing="false" text="Elec Temperature" />
-               </children>
-            </VBox>
-            <VBox alignment="CENTER" minHeight="200.0" prefWidth="200.0">
-               <children>
-                  <Label styleClass="lg" text="Sync Status" />
-                  <Label fx:id="lblSyncStatus" styleClass="md" />
-               </children>
-            </VBox>
-            <VBox alignment="CENTER_LEFT" spacing="10.0">
-               <children>
-                  <Button fx:id="btnStartSync" mnemonicParsing="false" onAction="#startSync" prefWidth="100.0" styleClass="lg" text="Start Sync" />
-                  <Button fx:id="btnViewSync" mnemonicParsing="false" onAction="#viewSync" prefWidth="100.0" styleClass="lg" text="View Sync" />
+                  <Button fx:id="btnStartSync" mnemonicParsing="false" onAction="#startSync" prefWidth="100.0" text="Start Sync">
+                     <styleClass>
+                        <String fx:value="lg" />
+                        <String fx:value="wide" />
+                     </styleClass></Button>
+                  <Button fx:id="btnViewSync" mnemonicParsing="false" onAction="#viewSync" prefWidth="100.0" text="View Sync">
+                     <styleClass>
+                        <String fx:value="lg" />
+                        <String fx:value="wide" />
+                     </styleClass></Button>
                </children>
                <padding>
                   <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
                </padding>
+            </VBox>
+            <VBox spacing="5.0">
+               <children>
+                  <Label alignment="CENTER" styleClass="lg" text="Plot Display" textAlignment="CENTER">
+                     <VBox.margin>
+                        <Insets left="15.0" />
+                     </VBox.margin>
+                  </Label>
+                  <CheckBox fx:id="cbTimeDiff" mnemonicParsing="false" styleClass="md" text="Time Difference" />
+                  <CheckBox fx:id="cbFreqDeriv" mnemonicParsing="false" styleClass="md" text="Frequency Derivative" />
+                  <CheckBox fx:id="cbElecTemp" mnemonicParsing="false" styleClass="md" text="Elec Temperature" />
+               </children>
+            </VBox>
+            <VBox alignment="TOP_CENTER" minHeight="200.0" prefWidth="200.0" spacing="5.0">
+               <children>
+                  <Label styleClass="lg" text="Manual Adjustment" />
+                  <ChoiceBox fx:id="cbAdjustment" prefWidth="150.0" styleClass="md">
+                     <opaqueInsets>
+                        <Insets left="5.0" right="5.0" />
+                     </opaqueInsets>
+                  </ChoiceBox>
+                  <Button fx:id="btnSendAdjustment" mnemonicParsing="false" text="Send Adjustment">
+                     <styleClass>
+                        <String fx:value="md" />
+                        <String fx:value="wide" />
+                     </styleClass>
+                  </Button>
+               </children>
             </VBox>
             <GridPane alignment="CENTER_RIGHT" prefWidth="250.0">
               <columnConstraints>
@@ -95,4 +128,19 @@
     <stylesheets>
         <URL value="@styles.css" />
     </stylesheets>
+   <top>
+      <HBox alignment="TOP_CENTER" prefHeight="50.0" prefWidth="200.0" spacing="10.0" BorderPane.alignment="CENTER">
+         <children>
+            <Label styleClass="lg" text="Sync Status:" />
+            <Label fx:id="lblSyncStatus" styleClass="lg">
+               <font>
+                  <Font name="System Bold" size="14.0" />
+               </font>
+            </Label>
+         </children>
+         <padding>
+            <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+         </padding>
+      </HBox>
+   </top>
 </BorderPane>

@@ -25,6 +25,7 @@ public abstract class BaseWindow {
         stage.setScene(scene);
 
         controller = loader.getController();
+        controller.setStage(stage);
 
         stage.setOnCloseRequest(event -> controller.dispose());
     }

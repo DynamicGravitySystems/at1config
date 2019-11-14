@@ -1,24 +1,24 @@
 package com.dynamicgravitysystems.at1config.bindings;
 
 import com.dynamicgravitysystems.common.gravity.DataField;
-import com.dynamicgravitysystems.common.gravity.MarineGravityReading;
+import com.dynamicgravitysystems.common.gravity.GravityReading;
 import javafx.beans.property.DoubleProperty;
 import javafx.beans.property.SimpleDoubleProperty;
 
 import java.util.EnumMap;
 import java.util.Map;
 
-public class MarineGravityReadingBinding {
+public class GravityReadingBinding {
 
     private final Map<DataField, DoubleProperty> propertyMap = new EnumMap<>(DataField.class);
 
-    public MarineGravityReadingBinding() {
+    public GravityReadingBinding() {
         for (DataField field : DataField.values()) {
             propertyMap.put(field, new SimpleDoubleProperty(0d));
         }
     }
 
-    public void update(MarineGravityReading reading) {
+    public void update(GravityReading reading) {
         for (DataField field : reading.getFields()) {
             propertyMap.get(field).set(reading.getValue(field));
         }
