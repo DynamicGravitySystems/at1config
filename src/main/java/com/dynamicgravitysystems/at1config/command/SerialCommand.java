@@ -4,6 +4,4 @@ public interface SerialCommand {
 
     String getCommand();
 
-    int length();
-
 }

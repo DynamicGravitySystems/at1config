@@ -44,9 +44,9 @@ public class SerialPortRunnable implements Runnable {
             stopped.set(true);
         }
 
-        String currentLine;
-        while (!stopped.get()) {
-            try (BufferedReader reader = new BufferedReader(new InputStreamReader(port.getInputStream()))) {
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(port.getInputStream()))) {
+            String currentLine;
+            while (!stopped.get()) {
                 try {
                     currentLine = reader.readLine();
                     if (currentLine != null) {
@@ -58,12 +58,12 @@ public class SerialPortRunnable implements Runnable {
                     messageSubject.onNext(SerialMessage.timeout());
                     log.warn("Serial Read timed out");
                 }
-            } catch (IOException ex) {
-                log.error("IO Exception reading from serial port", ex);
             }
+        } catch (IOException ex) {
+            log.error("IO Exception reading from serial port", ex);
+        } finally {
+            cleanup();
         }
-
-        cleanup();
     }
 
     void cancel() {
@@ -75,10 +75,10 @@ public class SerialPortRunnable implements Runnable {
     }
 
     synchronized boolean writeToSerial(String value) {
-        if(!port.isOpen())
+        if (!port.isOpen())
             throw new IllegalStateException("Serial port is not opened for writing");
 
-        try(BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(port.getOutputStream(), StandardCharsets.US_ASCII))) {
+        try (BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(port.getOutputStream(), StandardCharsets.US_ASCII))) {
             writer.write(value);
             log.debug("Sent value '{}' to serial port", value);
 
