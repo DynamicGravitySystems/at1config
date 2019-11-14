@@ -18,8 +18,4 @@ public enum MarineSensorCommand implements SerialCommand {
         return command;
     }
 
-    @Override
-    public int length() {
-        return command.length();
-    }
 }
