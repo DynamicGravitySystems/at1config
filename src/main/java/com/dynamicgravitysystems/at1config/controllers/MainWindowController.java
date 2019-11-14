@@ -272,6 +272,24 @@ public class MainWindowController extends BaseController {
     }
 
     @FXML
+    public void logGravityToFile() {
+        FileChooser chooser = new FileChooser();
+        chooser.setTitle("Set Gravity Log File");
+        chooser.getExtensionFilters().addAll(
+                new FileChooser.ExtensionFilter("Log File", "*.log"),
+                new FileChooser.ExtensionFilter("Data File", "*.dat")
+        );
+
+        File selection = chooser.showSaveDialog(getStage());
+
+        if(selection == null)
+            return;
+        else
+            System.out.println("Selected file to save gravity data to: " + selection.getName());
+
+    }
+
+    @FXML
     public void exit() {
         SerialServiceManager.shutdown();
         Platform.exit();
