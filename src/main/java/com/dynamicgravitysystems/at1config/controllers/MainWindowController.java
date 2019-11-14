@@ -1,15 +1,17 @@
 package com.dynamicgravitysystems.at1config.controllers;
 
-import com.dynamicgravitysystems.at1config.bindings.MarineGravityReadingBinding;
+import com.dynamicgravitysystems.at1config.bindings.GravityReadingBinding;
 import com.dynamicgravitysystems.at1config.command.MarineSensorCommand;
+import com.dynamicgravitysystems.at1config.parsing.DataParser;
 import com.dynamicgravitysystems.at1config.services.SerialMessage;
 import com.dynamicgravitysystems.at1config.services.SerialServiceManager;
 import com.dynamicgravitysystems.at1config.util.BaseController;
+import com.dynamicgravitysystems.at1config.util.DataSource;
+import com.dynamicgravitysystems.at1config.util.DataWriter;
 import com.dynamicgravitysystems.at1config.util.SerialConnectionParameters;
-import com.dynamicgravitysystems.at1config.util.SharedState;
+import com.dynamicgravitysystems.at1config.windows.ApplicationSettingsWindow;
 import com.dynamicgravitysystems.at1config.windows.TimeSynchronizerWindow;
-import com.dynamicgravitysystems.common.gravity.MarineGravityReading;
-import com.dynamicgravitysystems.common.gravity.MarineSensorCalibration;
+import com.dynamicgravitysystems.common.gravity.SensorCalibration;
 import com.dynamicgravitysystems.common.ini.IniFile;
 import com.fazecast.jSerialComm.SerialPort;
 import io.reactivex.Observable;
@@ -41,7 +43,9 @@ public class MainWindowController extends BaseController {
     private static final PseudoClass DANGER = PseudoClass.getPseudoClass("danger");
     private static final PseudoClass SUCCESS = PseudoClass.getPseudoClass("success");
 
-    @FXML MenuItem menuItemExit;
+    @FXML MenuItem menuToolsTimeSync;
+    @FXML MenuItem menuItemSettings;
+
     @FXML Button btnClamp;
     @FXML Button btnUnclamp;
     @FXML Button btnBeginSync;
@@ -62,28 +66,32 @@ public class MainWindowController extends BaseController {
     @FXML ChoiceBox<String> selectPortGPS;
     @FXML ChoiceBox<Integer> selectBaudGPS;
 
-
     @FXML TextArea dataGravity;
     @FXML TextArea dataGPS;
 
     private final ObservableList<String> comPorts = FXCollections.observableArrayList();
-    private final ObservableList<Integer> baudRates;
+    private final ObservableList<Integer> baudRates = FXCollections.observableArrayList(2400, 4800, 7200, 9600, 14400, 19200, 38400,
+            56000, 57600, 76800, 115200, 128000);
 
-    private final MarineGravityReadingBinding gravityReadingBinding = new MarineGravityReadingBinding();
+    private final GravityReadingBinding gravityReadingBinding = new GravityReadingBinding();
     private final SerialServiceManager serialManager = SerialServiceManager.getInstance();
-    private final SharedState state = SharedState.STATE;
+    private final DataParser processor = DataParser.INSTANCE;
+
+    private final DataWriter dataWriter = new DataWriter();
 
     public MainWindowController() {
-        baudRates = FXCollections.observableArrayList(2400, 4800, 7200, 9600, 14400, 19200, 38400,
-                56000, 57600, 76800, 115200, 128000);
     }
 
     @Override
     public void initialize(URL url, ResourceBundle resourceBundle) {
         refreshSerialPorts();
 
-        final BooleanProperty connectedGravity = serialManager.getConnectedProperty(SerialServiceManager.SerialSource.GRAVITY);
-        final BooleanProperty connectedGPS = serialManager.getConnectedProperty(SerialServiceManager.SerialSource.GPS);
+        final BooleanProperty connectedGravity = serialManager.getConnectedProperty(DataSource.GRAVITY);
+        final BooleanProperty connectedGPS = serialManager.getConnectedProperty(DataSource.GPS);
+
+        /*Menu Item Bindings*/
+        menuToolsTimeSync.disableProperty().bind(connectedGravity.not());
+        menuItemSettings.setOnAction(event -> new ApplicationSettingsWindow(getStage()).show());
 
         /*Action Bindings*/
         btnClearGravity.setOnAction(event -> dataGravity.clear());
@@ -91,8 +99,8 @@ public class MainWindowController extends BaseController {
         btnClamp.setOnAction(event -> serialManager.sendCommand(MarineSensorCommand.CLAMP));
         btnUnclamp.setOnAction(event -> serialManager.sendCommand(MarineSensorCommand.UNCLAMP));
         btnDisconnectAll.setOnAction(event -> {
-            serialManager.disconnect(SerialServiceManager.SerialSource.GRAVITY);
-            serialManager.disconnect(SerialServiceManager.SerialSource.GPS);
+            serialManager.disconnect(DataSource.GRAVITY);
+            serialManager.disconnect(DataSource.GPS);
             btnToggleGravity.setSelected(false);
             btnToggleGPS.setSelected(false);
         });
@@ -181,25 +189,28 @@ public class MainWindowController extends BaseController {
             LOG.info("Connecting to Gravity source on port {} with baud rate {}", selectedPort, baudRate);
             SerialConnectionParameters parameters = SerialConnectionParameters.forPortAndBaud(selectedPort, baudRate);
 
-            serialManager.connect(SerialServiceManager.SerialSource.GRAVITY, parameters)
+            serialManager.connect(DataSource.GRAVITY, parameters)
                     .observeOn(Schedulers.io())
                     .map(message -> {
                         // TODO: Set a data state on UI
                         SerialMessage.SerialEvent event = message.getEvent();
-                        System.out.println("Event is: " + event);
                         return message;
                     })
                     .filter(serialMessage -> serialMessage.getEvent() == SerialMessage.SerialEvent.RECEIVED)
-                    .doOnNext(value -> Platform.runLater(() -> dataGravity.appendText(value.getValue() + "\n")))
+                    .doOnNext(value -> {
+                        Platform.runLater(() -> dataGravity.appendText(value.getValue() + "\n"));
+                        dataWriter.writeLine(DataSource.GRAVITY, value.getValue());
+                    })
                     .flatMap(message -> Observable.just(message.getValue())
-                            .map(MarineGravityReading::fromString)
+                            .map(processor::parse)
                             .onErrorResumeNext(Observable.empty())
                             .onExceptionResumeNext(Observable.empty()))
+                    .map(processor::calibrate)
                     .subscribe(gravityReadingBinding::update);
 
         } else {
             LOG.info("Disconnecting from Gravity source");
-            serialManager.disconnect(SerialServiceManager.SerialSource.GRAVITY);
+            serialManager.disconnect(DataSource.GRAVITY);
         }
     }
 
@@ -217,15 +228,18 @@ public class MainWindowController extends BaseController {
             LOG.info("Connecting to GPS source on port {} with baud rate {}", selectedPort, baudRate);
             SerialConnectionParameters parameters = SerialConnectionParameters.forPortAndBaud(selectedPort, baudRate);
 
-            serialManager.connect(SerialServiceManager.SerialSource.GPS, parameters)
-                    .doOnNext(value -> Platform.runLater(() -> dataGPS.appendText(value + "\n")))
+            serialManager.connect(DataSource.GPS, parameters)
+                    .doOnNext(value -> {
+                        Platform.runLater(() -> dataGPS.appendText(value + "\n"));
+                        dataWriter.writeLine(DataSource.GPS, value.getValue());
+                    })
                     .observeOn(Schedulers.io())
                     .subscribe(value -> {
                     });
 
         } else {
             LOG.info("Disconnecting from GPS source");
-            serialManager.disconnect(SerialServiceManager.SerialSource.GPS);
+            serialManager.disconnect(DataSource.GPS);
         }
     }
 
@@ -250,7 +264,7 @@ public class MainWindowController extends BaseController {
 
         try {
             IniFile meterIni = IniFile.fromFile(selection);
-            state.setCalibration(MarineSensorCalibration.fromIni(meterIni));
+            processor.setCalibration(SensorCalibration.fromIni(meterIni));
             LOG.info("Successfully loaded sensor calibration");
         } catch (IOException ex) {
             LOG.error("Error parsing Meter.ini file", ex);
