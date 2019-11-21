@@ -1,63 +1,53 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<?import java.lang.String?>
-<?import java.net.URL?>
-<?import javafx.geometry.Insets?>
-<?import javafx.scene.control.Button?>
-<?import javafx.scene.control.ButtonBar?>
-<?import javafx.scene.control.ChoiceBox?>
-<?import javafx.scene.control.Label?>
-<?import javafx.scene.control.Menu?>
-<?import javafx.scene.control.MenuBar?>
-<?import javafx.scene.control.MenuItem?>
-<?import javafx.scene.control.Separator?>
-<?import javafx.scene.control.Tab?>
-<?import javafx.scene.control.TabPane?>
-<?import javafx.scene.control.TextArea?>
-<?import javafx.scene.control.ToggleButton?>
+<?import com.dynamicgravitysystems.at1config.controls.SerialConnectionControl?>
+<?import javafx.geometry.*?>
+<?import javafx.scene.control.*?>
 <?import javafx.scene.input.KeyCodeCombination?>
-<?import javafx.scene.layout.BorderPane?>
-<?import javafx.scene.layout.ColumnConstraints?>
-<?import javafx.scene.layout.GridPane?>
-<?import javafx.scene.layout.HBox?>
-<?import javafx.scene.layout.Pane?>
-<?import javafx.scene.layout.RowConstraints?>
-<?import javafx.scene.layout.VBox?>
-
-<BorderPane maxHeight="-Infinity" maxWidth="-Infinity" prefHeight="600.0" prefWidth="900.0" xmlns="http://javafx.com/javafx/11.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.dynamicgravitysystems.at1config.controllers.MainWindowController">
+<?import javafx.scene.layout.*?>
+<?import java.lang.*?>
+<?import java.net.URL?>
+<BorderPane maxHeight="-Infinity" maxWidth="-Infinity" prefHeight="600.0" prefWidth="1000.0"
+            xmlns="http://javafx.com/javafx/11.0.1" xmlns:fx="http://javafx.com/fxml/1"
+            fx:controller="com.dynamicgravitysystems.at1config.controllers.MainWindowController">
     <top>
         <MenuBar BorderPane.alignment="CENTER">
             <menus>
                 <Menu mnemonicParsing="false" text="File">
                     <items>
                         <MenuItem fx:id="menuItemExit" mnemonicParsing="false" onAction="#exit" text="Exit">
-                     <accelerator>
-                        <KeyCodeCombination alt="UP" code="Q" control="DOWN" meta="UP" shift="UP" shortcut="UP" />
-                     </accelerator></MenuItem>
+                            <accelerator>
+                                <KeyCodeCombination alt="UP" code="Q" control="DOWN" meta="UP" shift="UP"
+                                                    shortcut="UP"/>
+                            </accelerator>
+                        </MenuItem>
                     </items>
                 </Menu>
-            <Menu mnemonicParsing="false" text="Configuration">
-              <items>
-                <MenuItem mnemonicParsing="false" onAction="#loadIni" text="Load Meter Config">
-                     <accelerator>
-                        <KeyCodeCombination alt="UP" code="M" control="DOWN" meta="UP" shift="UP" shortcut="UP" />
-                     </accelerator>
-                  </MenuItem>
-                  <MenuItem fx:id="menuItemSettings" mnemonicParsing="false" text="Application Settings">
-                     <accelerator>
-                        <KeyCodeCombination alt="DOWN" code="S" control="DOWN" meta="UP" shift="UP" shortcut="UP" />
-                     </accelerator>
-                  </MenuItem>
-              </items>
-            </Menu>
-            <Menu mnemonicParsing="false" text="Tools">
-              <items>
-                <MenuItem fx:id="menuToolsTimeSync" mnemonicParsing="false" onAction="#enterSyncMode" text="Time Synchronization" />
-              </items>
-            </Menu>
+                <Menu mnemonicParsing="false" text="Configuration">
+                    <items>
+                        <MenuItem mnemonicParsing="false" onAction="#loadIni" text="Load Meter Config">
+                            <accelerator>
+                                <KeyCodeCombination alt="UP" code="M" control="DOWN" meta="UP" shift="UP"
+                                                    shortcut="UP"/>
+                            </accelerator>
+                        </MenuItem>
+                        <MenuItem fx:id="menuItemSettings" mnemonicParsing="false" text="Application Settings">
+                            <accelerator>
+                                <KeyCodeCombination alt="DOWN" code="S" control="DOWN" meta="UP" shift="UP"
+                                                    shortcut="UP"/>
+                            </accelerator>
+                        </MenuItem>
+                    </items>
+                </Menu>
+                <Menu mnemonicParsing="false" text="Tools">
+                    <items>
+                        <MenuItem fx:id="menuToolsTimeSync" mnemonicParsing="false" onAction="#enterSyncMode"
+                                  text="Time Synchronization"/>
+                    </items>
+                </Menu>
                 <Menu mnemonicParsing="false" text="Help">
                     <items>
-                        <MenuItem mnemonicParsing="false" text="About" />
+                        <MenuItem mnemonicParsing="false" text="About"/>
                     </items>
                 </Menu>
             </menus>
@@ -66,207 +56,104 @@
     <left>
         <VBox alignment="TOP_CENTER" prefHeight="200.0" prefWidth="175.0" spacing="7.0" BorderPane.alignment="CENTER">
             <children>
-            <Label styleClass="md" text="Sensor Commands" />
-                <Button fx:id="btnClamp" mnemonicParsing="false" styleClass="wide" text="Clamp" />
-                <Button fx:id="btnUnclamp" mnemonicParsing="false" styleClass="wide" text="Unclamp" />
-            <Separator prefWidth="200.0" />
+                <Label styleClass="md" text="Sensor Commands"/>
+                <Button fx:id="btnClamp" mnemonicParsing="false" styleClass="wide" text="Clamp"/>
+                <Button fx:id="btnUnclamp" mnemonicParsing="false" styleClass="wide" text="Unclamp"/>
+                <Button fx:id="btnClampLimits" mnemonicParsing="false" styleClass="wide" text="Set Clamp Limits" />
+                <Button fx:id="btnStopClamp" mnemonicParsing="false" styleClass="wide" text="Stop Clamp Motor" />
+                <Button fx:id="btnFeedbackOn" mnemonicParsing="false" styleClass="wide" text="Turn Feedback On" />
+                <Button fx:id="btnFeedbackOff" mnemonicParsing="false" styleClass="wide" text="Turn Feedback Off" />
+                <Separator prefWidth="200.0"/>
             </children>
             <opaqueInsets>
-                <Insets />
+                <Insets/>
             </opaqueInsets>
-         <BorderPane.margin>
-            <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
-         </BorderPane.margin>
+            <BorderPane.margin>
+                <Insets bottom="5.0" left="5.0" right="5.0" top="5.0"/>
+            </BorderPane.margin>
         </VBox>
     </left>
     <bottom>
         <HBox prefHeight="200.0" prefWidth="250.0" BorderPane.alignment="CENTER">
             <children>
-            <VBox alignment="TOP_CENTER" prefHeight="200.0" prefWidth="175.0" spacing="5.0">
-               <children>
-                      <Button fx:id="btnBeginSync" mnemonicParsing="false" onAction="#enterSyncMode" text="Time Sync">
-                     <styleClass>
-                        <String fx:value="md" />
-                        <String fx:value="wide" />
-                     </styleClass></Button>
-                  <Button fx:id="btnRefreshPorts" mnemonicParsing="false" onAction="#refreshSerialPorts" text="Refresh Serial">
-                     <styleClass>
-                        <String fx:value="md" />
-                        <String fx:value="wide" />
-                     </styleClass></Button>
-                  <Button fx:id="btnDisconnectAll" mnemonicParsing="false" text="Disconnect All">
-                     <styleClass>
-                        <String fx:value="md" />
-                        <String fx:value="wide" />
-                     </styleClass>
-                  </Button>
-               </children>
-               <padding>
-                  <Insets top="5.0" />
-               </padding>
-            </VBox>
-            <Pane styleClass="border" HBox.hgrow="NEVER">
-               <children>
-                  <GridPane alignment="CENTER" hgap="5.0" vgap="5.0">
-                    <columnConstraints>
-                      <ColumnConstraints hgrow="SOMETIMES" maxWidth="95.0" minWidth="10.0" prefWidth="70.0" />
-                        <ColumnConstraints hgrow="SOMETIMES" maxWidth="125.0" minWidth="10.0" prefWidth="125.0" />
-                    </columnConstraints>
-                    <rowConstraints>
-                      <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
-                      <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
-                      <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
-                        <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
-                        <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
-                    </rowConstraints>
-                     <children>
-                              <Label styleClass="lg" text="Gravity Data Connection" GridPane.columnSpan="2" GridPane.halignment="CENTER" GridPane.hgrow="ALWAYS" GridPane.valignment="CENTER" GridPane.vgrow="ALWAYS" />
-                        <HBox alignment="CENTER" prefHeight="100.0" prefWidth="200.0" spacing="5.0" GridPane.columnSpan="2" GridPane.halignment="CENTER" GridPane.rowIndex="4">
-                           <padding>
-                              <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
-                           </padding>
-                           <children>
-                              <ToggleButton fx:id="btnToggleGravity" mnemonicParsing="false" onAction="#connectSerialGravity" text="Connect">
-                                 <styleClass>
-                                    <String fx:value="md" />
-                                    <String fx:value="wide" />
-                                 </styleClass>
-                              </ToggleButton>
-                           </children>
-                        </HBox>
-                        <HBox alignment="CENTER" spacing="5.0" GridPane.columnIndex="1" GridPane.halignment="CENTER" GridPane.rowIndex="1" GridPane.valignment="CENTER">
-                           <children>
-                              <Label fx:id="lblGravityStatus" text="DISCONNECTED" />
-                           </children>
-                        </HBox>
-                        <Label text="Serial Port" GridPane.halignment="RIGHT" GridPane.rowIndex="2">
-                           <padding>
-                              <Insets right="5.0" />
-                           </padding>
-                        </Label>
-                        <Label text="Baud Rate" GridPane.halignment="RIGHT" GridPane.rowIndex="3">
-                           <padding>
-                              <Insets right="5.0" />
-                           </padding>
-                        </Label>
-                        <ChoiceBox fx:id="selectBaudGravity" prefWidth="150.0" GridPane.columnIndex="1" GridPane.rowIndex="3" />
-                              <ChoiceBox fx:id="selectPortGravity" prefWidth="150.0" GridPane.columnIndex="1" GridPane.rowIndex="2" />
-                        <Label text="Status" GridPane.halignment="RIGHT" GridPane.rowIndex="1">
-                           <padding>
-                              <Insets right="5.0" />
-                           </padding>
-                        </Label>
-                     </children>
-                     <opaqueInsets>
-                        <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
-                     </opaqueInsets>
-                     <padding>
-                        <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
-                     </padding>
-                  </GridPane>
-               </children>
-               <HBox.margin>
-                  <Insets bottom="3.0" left="8.0" right="3.0" top="3.0" />
-               </HBox.margin>
-            </Pane>
-            <Pane styleClass="border" HBox.hgrow="NEVER">
-               <children>
-                  <GridPane hgap="5.0" vgap="5.0">
-                    <columnConstraints>
-                      <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="75.0" />
-                        <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="125.0" />
-                    </columnConstraints>
-                    <rowConstraints>
-                      <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
-                      <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
-                      <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
-                        <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
-                        <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
-                    </rowConstraints>
-                     <children>
-                        <Label styleClass="lg" text="GPS Data Connection" GridPane.columnSpan="2" GridPane.halignment="CENTER" />
-                        <Label text="Serial Port" GridPane.halignment="RIGHT" GridPane.rowIndex="2">
-                           <padding>
-                              <Insets right="5.0" />
-                           </padding>
-                        </Label>
-                        <Label text="Baud Rate" GridPane.halignment="RIGHT" GridPane.rowIndex="3">
-                           <padding>
-                              <Insets right="5.0" />
-                           </padding>
-                           <GridPane.margin>
-                              <Insets right="5.0" />
-                           </GridPane.margin>
-                        </Label>
-                        <ChoiceBox fx:id="selectPortGPS" prefWidth="150.0" GridPane.columnIndex="1" GridPane.rowIndex="2" />
-                        <ToggleButton fx:id="btnToggleGPS" mnemonicParsing="false" onAction="#connectSerialGPS" text="Connect" GridPane.columnSpan="2" GridPane.halignment="CENTER" GridPane.rowIndex="4">
-                           <styleClass>
-                              <String fx:value="md" />
-                              <String fx:value="wide" />
-                           </styleClass>
-                        </ToggleButton>
-                        <ChoiceBox fx:id="selectBaudGPS" prefWidth="150.0" GridPane.columnIndex="1" GridPane.rowIndex="3" />
-                        <Label text="Status" GridPane.halignment="RIGHT" GridPane.rowIndex="1">
-                           <GridPane.margin>
-                              <Insets right="5.0" />
-                           </GridPane.margin>
-                        </Label>
-                        <Label fx:id="lblGpsStatus" text="DISCONNECTED" GridPane.columnIndex="1" GridPane.halignment="CENTER" GridPane.rowIndex="1" />
-                     </children>
-                     <padding>
-                        <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
-                     </padding>
-                  </GridPane>
-               </children>
-               <HBox.margin>
-                  <Insets bottom="3.0" left="3.0" right="3.0" top="3.0" />
-               </HBox.margin>
-            </Pane>
-            <Separator disable="true" opacity="0.0" prefWidth="200.0" />
+                <VBox alignment="TOP_CENTER" prefHeight="200.0" prefWidth="175.0" spacing="5.0">
+                    <children>
+                        <Button fx:id="btnBeginSync" mnemonicParsing="false" onAction="#enterSyncMode" text="Time Sync">
+                            <styleClass>
+                                <String fx:value="md"/>
+                                <String fx:value="wide"/>
+                            </styleClass>
+                        </Button>
+                        <Button fx:id="btnRefreshPorts" mnemonicParsing="false" onAction="#refreshSerialPorts"
+                                text="Refresh Serial">
+                            <styleClass>
+                                <String fx:value="md"/>
+                                <String fx:value="wide"/>
+                            </styleClass>
+                        </Button>
+                        <Button fx:id="btnDisconnectAll" mnemonicParsing="false" text="Disconnect All">
+                            <styleClass>
+                                <String fx:value="md"/>
+                                <String fx:value="wide"/>
+                            </styleClass>
+                        </Button>
+                    </children>
+                    <padding>
+                        <Insets top="5.0"/>
+                    </padding>
+                </VBox>
+                <SerialConnectionControl fx:id="gravityConnectionControl" source="GRAVITY"
+                                         title="Gravity Data Connection" defaultBaudRate="57600"/>
+                <Separator disable="true" opacity="0.0" prefWidth="10" />
+                <SerialConnectionControl fx:id="gpsConnectionControl" source="GPS" title="GPS Data Connection"
+                                         defaultBaudRate="38400"/>
+                <Separator disable="true" opacity="0.0" prefWidth="200.0"/>
             </children>
-         <BorderPane.margin>
-            <Insets top="2.0" />
-         </BorderPane.margin>
+            <BorderPane.margin>
+                <Insets top="2.0" bottom="2.0"/>
+            </BorderPane.margin>
         </HBox>
     </bottom>
-   <center>
-      <TabPane prefHeight="200.0" prefWidth="200.0" tabClosingPolicy="UNAVAILABLE" BorderPane.alignment="CENTER">
-        <tabs>
-          <Tab text="Gravity">
-            <content>
-                  <VBox>
-                     <children>
-                            <TextArea fx:id="dataGravity" editable="false" prefHeight="347.0" prefWidth="790.0" VBox.vgrow="ALWAYS" />
-                        <ButtonBar prefHeight="40.0" prefWidth="200.0">
-                          <buttons>
-                            <Button mnemonicParsing="false" onAction="#logGravityToFile" text="Log to File" />
-                              <Button fx:id="btnClearGravity" mnemonicParsing="false" text="Clear" />
-                          </buttons>
-                           <VBox.margin>
-                              <Insets bottom="3.0" left="3.0" right="3.0" top="3.0" />
-                           </VBox.margin>
-                        </ButtonBar>
-                     </children>
-                     <padding>
-                        <Insets bottom="2.0" />
-                     </padding>
-                  </VBox>
-            </content>
-          </Tab>
-          <Tab text="GPS">
-            <content>
-                  <VBox>
-                     <children>
-                        <TextArea fx:id="dataGPS" editable="false" VBox.vgrow="ALWAYS" />
-                        <Button fx:id="btnClearGPS" mnemonicParsing="false" text="Clear" />
-                     </children>
-                  </VBox>
-            </content>
-          </Tab>
-        </tabs>
-      </TabPane>
-   </center>
+    <center>
+        <TabPane prefHeight="200.0" prefWidth="200.0" tabClosingPolicy="UNAVAILABLE" BorderPane.alignment="CENTER">
+            <tabs>
+                <Tab text="Gravity">
+                    <content>
+                        <VBox>
+                            <children>
+                                <TextArea fx:id="dataGravity" editable="false" prefHeight="347.0" prefWidth="790.0"
+                                          VBox.vgrow="ALWAYS"/>
+                                <ButtonBar prefHeight="40.0" prefWidth="200.0">
+                                    <buttons>
+                                        <Button mnemonicParsing="false" onAction="#logGravityToFile"
+                                                text="Log to File"/>
+                                        <Button fx:id="btnClearGravity" mnemonicParsing="false" text="Clear"/>
+                                    </buttons>
+                                    <VBox.margin>
+                                        <Insets bottom="3.0" left="3.0" right="3.0" top="3.0"/>
+                                    </VBox.margin>
+                                </ButtonBar>
+                            </children>
+                            <padding>
+                                <Insets bottom="2.0"/>
+                            </padding>
+                        </VBox>
+                    </content>
+                </Tab>
+                <Tab text="GPS">
+                    <content>
+                        <VBox>
+                            <children>
+                                <TextArea fx:id="dataGPS" editable="false" VBox.vgrow="ALWAYS"/>
+                                <Button fx:id="btnClearGPS" mnemonicParsing="false" text="Clear"/>
+                            </children>
+                        </VBox>
+                    </content>
+                </Tab>
+            </tabs>
+        </TabPane>
+    </center>
     <stylesheets>
-        <URL value="@styles.css" />
+        <URL value="@styles.css"/>
     </stylesheets>
 </BorderPane>

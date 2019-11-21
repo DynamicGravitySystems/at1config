@@ -41,6 +41,8 @@ public class SerialPortRunnable implements Runnable {
             messageSubject.onNext(SerialMessage.connected());
         else {
             log.error("Failed to open serial port");
+            messageSubject.onNext(SerialMessage.failed());
+            messageSubject.onError(new RuntimeException("Failed to open serial port"));
             stopped.set(true);
         }
 

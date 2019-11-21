@@ -3,9 +3,13 @@ package com.dynamicgravitysystems.at1config.services;
 import com.dynamicgravitysystems.at1config.command.SerialCommand;
 import com.dynamicgravitysystems.at1config.util.DataSource;
 import com.dynamicgravitysystems.at1config.util.SerialConnectionParameters;
+import com.fazecast.jSerialComm.SerialPort;
 import io.reactivex.Observable;
+import javafx.application.Platform;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -28,7 +32,10 @@ public enum SerialServiceManager {
         connectedProperties.put(DataSource.GPS, new SimpleBooleanProperty(false));
     }
 
+    private final ObservableList<String> commPorts = FXCollections.observableArrayList();
+
     SerialServiceManager() {
+        refreshCommPorts();
     }
 
     public static SerialServiceManager getInstance() {
@@ -50,10 +57,19 @@ public enum SerialServiceManager {
         final String device = parameters.getDevice();
         final SerialPortRunnable runner = new SerialPortRunnable(device, parameters);
 
+        runner.getMessageSubject().subscribe(event -> {
+            if (event.getEvent() == SerialMessage.SerialEvent.CONNECTED) {
+                Platform.runLater(() -> connectedProperties.get(source).set(true));
+            }
+        }, err -> {
+            LOG.error("Serial connection has failed");
+            Platform.runLater(() -> connectedProperties.get(source).set(false));
+            disconnect(source);
+        }, () -> Platform.runLater(() -> connectedProperties.get(source).set(false)));
+
         publishers.put(source, runner.getMessageSubject());
         connections.put(source, runner);
         executor.submit(runner);
-        connectedProperties.get(source).set(true);
 
         return runner.getMessageSubject();
     }
@@ -72,11 +88,12 @@ public enum SerialServiceManager {
         connections.get(source).cancel();
         connections.remove(source);
         publishers.remove(source);
-        connectedProperties.get(source).set(false);
+
+        Platform.runLater(() -> connectedProperties.get(source).set(false));
     }
 
-    public boolean isConnected(final DataSource source) {
-        return connections.containsKey(source) && connections.get(source).isRunning();
+    public boolean isNotConnected(final DataSource source) {
+        return !connections.containsKey(source) || !connections.get(source).isRunning();
     }
 
     public Observable<SerialMessage> getSubject(final DataSource source) {
@@ -90,7 +107,7 @@ public enum SerialServiceManager {
     }
 
     public boolean sendCommand(DataSource source, SerialCommand command) {
-        if (!isConnected(source)) {
+        if (isNotConnected(source)) {
             LOG.warn("Source {} is not connected, cannot send command", source);
             return false;
         }
@@ -100,7 +117,7 @@ public enum SerialServiceManager {
     }
 
     public boolean sendRawCommand(DataSource source, String command) {
-        if (!isConnected(source)) {
+        if (isNotConnected(source)) {
             LOG.warn("Source {} is not connected, cannot send command", source);
             return false;
         }
@@ -109,5 +126,20 @@ public enum SerialServiceManager {
 
     public BooleanProperty getConnectedProperty(DataSource source) {
         return connectedProperties.get(source);
+    }
+
+    public ObservableList<String> getCommPorts() {
+        return commPorts;
+    }
+
+    public void refreshCommPorts() {
+        if (!commPorts.isEmpty())
+            commPorts.clear();
+
+        for (SerialPort port : SerialPort.getCommPorts()) {
+            commPorts.add(port.getSystemPortName());
+        }
+        commPorts.sort(String::compareTo);
+
     }
 }

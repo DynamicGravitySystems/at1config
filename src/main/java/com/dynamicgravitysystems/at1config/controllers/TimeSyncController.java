@@ -143,7 +143,7 @@ public class TimeSyncController extends BaseController {
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
-        if (!serialManager.isConnected(DataSource.GRAVITY))
+        if (serialManager.isNotConnected(DataSource.GRAVITY))
             throw new IllegalStateException("TimeSyncController cannot be initialized if there is no Gravity source");
 
         cbAdjustment.getItems().addAll(-3, -2, -1, 0, 1, 2, 3);
@@ -345,7 +345,11 @@ public class TimeSyncController extends BaseController {
     }
 
     private void showAlert(Alert.AlertType alertType, String message) {
-        Platform.runLater(() -> new Alert(alertType, message).show());
+        Platform.runLater(() -> {
+            final Alert alert = new Alert(alertType, message);
+            alert.initOwner(getStage().getScene().getWindow());
+            alert.show();
+        });
     }
 
     private void interpretStatus() {
