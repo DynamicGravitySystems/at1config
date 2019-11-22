@@ -59,10 +59,10 @@
                 <Label styleClass="md" text="Sensor Commands"/>
                 <Button fx:id="btnClamp" mnemonicParsing="false" styleClass="wide" text="Clamp"/>
                 <Button fx:id="btnUnclamp" mnemonicParsing="false" styleClass="wide" text="Unclamp"/>
-                <Button fx:id="btnClampLimits" mnemonicParsing="false" styleClass="wide" text="Set Clamp Limits" />
-                <Button fx:id="btnStopClamp" mnemonicParsing="false" styleClass="wide" text="Stop Clamp Motor" />
-                <Button fx:id="btnFeedbackOn" mnemonicParsing="false" styleClass="wide" text="Turn Feedback On" />
-                <Button fx:id="btnFeedbackOff" mnemonicParsing="false" styleClass="wide" text="Turn Feedback Off" />
+                <Button fx:id="btnClampLimits" mnemonicParsing="false" styleClass="wide" text="Set Clamp Limits"/>
+                <Button fx:id="btnStopClamp" mnemonicParsing="false" styleClass="wide" text="Stop Clamp Motor"/>
+                <Button fx:id="btnFeedbackOn" mnemonicParsing="false" styleClass="wide" text="Turn Feedback On"/>
+                <Button fx:id="btnFeedbackOff" mnemonicParsing="false" styleClass="wide" text="Turn Feedback Off"/>
                 <Separator prefWidth="200.0"/>
             </children>
             <opaqueInsets>
@@ -104,7 +104,7 @@
                 </VBox>
                 <SerialConnectionControl fx:id="gravityConnectionControl" source="GRAVITY"
                                          title="Gravity Data Connection" defaultBaudRate="57600"/>
-                <Separator disable="true" opacity="0.0" prefWidth="10" />
+                <Separator disable="true" opacity="0.0" prefWidth="10"/>
                 <SerialConnectionControl fx:id="gpsConnectionControl" source="GPS" title="GPS Data Connection"
                                          defaultBaudRate="38400"/>
                 <Separator disable="true" opacity="0.0" prefWidth="200.0"/>
@@ -125,8 +125,6 @@
                                           VBox.vgrow="ALWAYS"/>
                                 <ButtonBar prefHeight="40.0" prefWidth="200.0">
                                     <buttons>
-                                        <Button mnemonicParsing="false" onAction="#logGravityToFile"
-                                                text="Log to File"/>
                                         <Button fx:id="btnClearGravity" mnemonicParsing="false" text="Clear"/>
                                     </buttons>
                                     <VBox.margin>

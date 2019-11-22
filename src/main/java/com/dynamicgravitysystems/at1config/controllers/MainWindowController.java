@@ -6,7 +6,6 @@ import com.dynamicgravitysystems.at1config.parsing.DataParser;
 import com.dynamicgravitysystems.at1config.services.SerialServiceManager;
 import com.dynamicgravitysystems.at1config.util.BaseController;
 import com.dynamicgravitysystems.at1config.util.DataSource;
-import com.dynamicgravitysystems.at1config.util.DataWriter;
 import com.dynamicgravitysystems.at1config.windows.TimeSynchronizerWindow;
 import com.dynamicgravitysystems.common.gravity.SensorCalibration;
 import com.dynamicgravitysystems.common.ini.IniFile;
@@ -38,26 +37,25 @@ public class MainWindowController extends BaseController {
     @FXML SerialConnectionControl gpsConnectionControl;
 
     /*Sensor Command Action Buttons*/
-    @FXML Button btnClamp;
-    @FXML Button btnUnclamp;
-    @FXML Button btnClampLimits;
-    @FXML Button btnStopClamp;
-    @FXML Button btnFeedbackOn;
-    @FXML Button btnFeedbackOff;
+    @FXML private Button btnClamp;
+    @FXML private Button btnUnclamp;
+    @FXML private Button btnClampLimits;
+    @FXML private Button btnStopClamp;
+    @FXML private Button btnFeedbackOn;
+    @FXML private Button btnFeedbackOff;
 
-    @FXML Button btnBeginSync;
-    @FXML Button btnRefreshPorts;
-    @FXML Button btnClearGravity;
-    @FXML Button btnClearGPS;
-    @FXML Button btnDisconnectAll;
+    @FXML private Button btnBeginSync;
+    @FXML private Button btnRefreshPorts;
+    @FXML private Button btnClearGravity;
+    @FXML private Button btnClearGPS;
+    @FXML private Button btnDisconnectAll;
 
-    @FXML TextArea dataGravity;
-    @FXML TextArea dataGPS;
+    @FXML private TextArea dataGravity;
+    @FXML private TextArea dataGPS;
 
     private final SerialServiceManager serialManager = SerialServiceManager.getInstance();
     private final DataParser processor = DataParser.INSTANCE;
 
-    private final DataWriter dataWriter = new DataWriter();
 
     public MainWindowController() {
     }
@@ -107,6 +105,8 @@ public class MainWindowController extends BaseController {
     @FXML
     public void refreshSerialPorts() {
         serialManager.refreshCommPorts();
+        gravityConnectionControl.reselectPort();
+        gpsConnectionControl.reselectPort();
     }
 
     @FXML
@@ -135,24 +135,6 @@ public class MainWindowController extends BaseController {
         } catch (IOException ex) {
             LOG.error("Error parsing Meter.ini file", ex);
         }
-    }
-
-    @FXML
-    public void logGravityToFile() {
-        FileChooser chooser = new FileChooser();
-        chooser.setTitle("Set Gravity Log File");
-        chooser.getExtensionFilters().addAll(
-                new FileChooser.ExtensionFilter("Log File", "*.log"),
-                new FileChooser.ExtensionFilter("Data File", "*.dat")
-        );
-
-        File selection = chooser.showSaveDialog(getStage());
-
-        if (selection == null)
-            return;
-        else
-            System.out.println("Selected file to save gravity data to: " + selection.getName());
-
     }
 
     @FXML
