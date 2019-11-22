@@ -24,17 +24,19 @@ public class LogConfigurationDialog extends Dialog<LoggingServiceConfiguration> 
 
     public LogConfigurationDialog(DataSource source, LoggingServiceConfiguration currentConfiguration) {
         final DialogPane dialogPane = getDialogPane();
+        dialogPane.setPrefWidth(300.0);
 
         setTitle("Logging Configuration");
         filePathField = new TextField();
         filePathField.setEditable(false);
+        filePathField.setPrefWidth(175);
+        filePathField.setOnMouseClicked(event -> chooseFile());
         filePathField.textProperty().bind(Bindings.createStringBinding(() -> {
             Path path = selectedPath.getValue();
             if (path != null)
                 return path.toAbsolutePath().toString();
             return "";
         }, selectedPath));
-
         if (currentConfiguration.getFilePath() != null) {
             selectedPath.set(currentConfiguration.getFilePath());
         }
@@ -66,6 +68,11 @@ public class LogConfigurationDialog extends Dialog<LoggingServiceConfiguration> 
                     : null;
         });
 
+        selectedPath.addListener(((observable, oldValue, newValue) -> {
+            if (newValue != null)
+                checkEnabled.setSelected(true);
+        }));
+
     }
 
     private void chooseFile() {
@@ -76,10 +83,14 @@ public class LogConfigurationDialog extends Dialog<LoggingServiceConfiguration> 
                 new FileChooser.ExtensionFilter("Data File", "*.dat")
         );
 
+        if(selectedPath.getValue() != null) {
+            chooser.setInitialDirectory(selectedPath.getValue().getParent().toFile());
+            chooser.setInitialFileName(selectedPath.getValue().getFileName().toString());
+        }
+
         File selected = chooser.showSaveDialog(getOwner());
         if (selected != null) {
             selectedPath.set(selected.toPath());
         }
-
     }
 }
