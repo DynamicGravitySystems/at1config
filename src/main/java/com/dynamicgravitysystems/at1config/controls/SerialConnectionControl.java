@@ -1,9 +1,14 @@
 package com.dynamicgravitysystems.at1config.controls;
 
+import com.dynamicgravitysystems.at1config.services.DataLoggingService;
+import com.dynamicgravitysystems.at1config.services.LoggingService;
 import com.dynamicgravitysystems.at1config.services.SerialMessage;
 import com.dynamicgravitysystems.at1config.services.SerialServiceManager;
 import com.dynamicgravitysystems.at1config.util.DataSource;
+import com.dynamicgravitysystems.at1config.util.LoggingServiceConfiguration;
+import com.dynamicgravitysystems.at1config.util.ResourceManager;
 import com.dynamicgravitysystems.at1config.util.SerialConnectionParameters;
+import com.dynamicgravitysystems.at1config.windows.LogConfigurationDialog;
 import io.reactivex.disposables.Disposable;
 import javafx.application.Platform;
 import javafx.beans.binding.Bindings;
@@ -12,10 +17,9 @@ import javafx.beans.property.SimpleBooleanProperty;
 import javafx.css.PseudoClass;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
-import javafx.scene.control.Alert;
-import javafx.scene.control.ChoiceBox;
-import javafx.scene.control.Label;
-import javafx.scene.control.ToggleButton;
+import javafx.scene.control.*;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 import javafx.scene.layout.VBox;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -31,7 +35,8 @@ public class SerialConnectionControl extends VBox {
     private static final Logger LOG = LogManager.getLogger(SerialConnectionControl.class.getName());
     private static final PseudoClass DANGER = PseudoClass.getPseudoClass("danger");
     private static final PseudoClass SUCCESS = PseudoClass.getPseudoClass("success");
-    private final SerialServiceManager serialManager;
+    private final SerialServiceManager serialManager = SerialServiceManager.getInstance();
+    private final LoggingService loggingService = DataLoggingService.getInstance();
 
     @FXML private Label lblTitle;
     @FXML private Label lblState;
@@ -39,9 +44,14 @@ public class SerialConnectionControl extends VBox {
     @FXML private ChoiceBox<String> cbPort;
     @FXML private ChoiceBox<Integer> cbBaud;
     @FXML private ToggleButton btnToggleConnection;
+    @FXML private MenuButton btnSettings;
+    @FXML private MenuItem btnConfigureLogging;
+    @FXML private MenuItem btnConfigureSerial;
 
     private DataSource source;
     private Disposable subscription;
+    private String selectedPort;
+    private LoggingServiceConfiguration logConfiguration = new LoggingServiceConfiguration(null, true, false);
 
     private Consumer<String> dataConsumer = value -> {
     };
@@ -59,10 +69,17 @@ public class SerialConnectionControl extends VBox {
             throw new RuntimeException(ex);
         }
 
+        try {
+            Image wrench = new Image(ResourceManager.ICON_WRENCH.getStream(), 15, 15, true, true);
+            btnSettings.setGraphic(new ImageView(wrench));
+        } catch (IOException ignored) {
+
+        }
+
         // Initialize Control State
         btnToggleConnection.setOnAction(event -> toggleConnection());
+        btnConfigureLogging.setOnAction(event -> configureLogging());
         lblState.pseudoClassStateChanged(DANGER, true);
-        serialManager = SerialServiceManager.getInstance();
 
         cbPort.setItems(serialManager.getCommPorts());
         cbPort.getSelectionModel().selectNext();
@@ -75,6 +92,7 @@ public class SerialConnectionControl extends VBox {
                 return "DISCONNECTED";
         }, connected));
 
+        btnToggleConnection.disableProperty().bind(cbPort.valueProperty().isNull().or(cbBaud.valueProperty().isNull()));
         btnToggleConnection.textProperty().bind(Bindings.createStringBinding(() -> {
             if (connected.get())
                 return "Disconnect";
@@ -90,6 +108,21 @@ public class SerialConnectionControl extends VBox {
         cbPort.disableProperty().bind(connected);
         cbBaud.disableProperty().bind(connected);
 
+        cbPort.valueProperty().addListener((observable, oldValue, newValue) -> {
+            if (newValue != null)
+                selectedPort = newValue;
+        });
+
+    }
+
+    /**
+     * Attempts to re-select the last selected serial port (e.g. after serial port listing has been refreshed)
+     */
+    public void reselectPort() {
+        if (selectedPort != null) {
+            int index = cbPort.getItems().indexOf(selectedPort);
+            cbPort.getSelectionModel().select(index);
+        }
     }
 
     public String getTitle() {
@@ -138,11 +171,19 @@ public class SerialConnectionControl extends VBox {
         if (source == null)
             throw new IllegalStateException("Data Source must be set for SerialConnectionControl");
 
-        final int baudRate = cbBaud.getValue();
         final String portDesc = cbPort.getValue();
+        final Integer baudRate = cbBaud.getValue();
 
         if (portDesc == null) {
             LOG.warn("No port is selected");
+            showAlert("Port must be selected");
+            btnToggleConnection.setSelected(false);
+            return;
+        }
+
+        if (baudRate == null) {
+            LOG.warn("No baud rate is selected");
+            showAlert("Baud Rate must be selected");
             btnToggleConnection.setSelected(false);
             return;
         }
@@ -158,6 +199,7 @@ public class SerialConnectionControl extends VBox {
                 .filter(message -> message.getEvent() == SerialMessage.SerialEvent.RECEIVED)
                 .subscribe(message -> {  // onNext
                     Platform.runLater(() -> dataConsumer.accept(message.getValue()));
+                    loggingService.log(source, message.getValue());
                 }, err -> {  // onError
                     LOG.error("Error occurred on serial connection {}", portDesc, err);
                     showAlert("Error occurred on serial connection, connection will be terminated. Reason: " + err.getMessage());
@@ -167,11 +209,20 @@ public class SerialConnectionControl extends VBox {
                     LOG.info("Serial connection has completed: {}", portDesc);
                     Platform.runLater(() -> btnToggleConnection.setSelected(false));
                 });
-
     }
 
     private void disconnect() {
         serialManager.disconnect(source);
+    }
+
+    private void configureLogging() {
+        LogConfigurationDialog dialog = new LogConfigurationDialog(source, logConfiguration);
+        dialog.initOwner(getScene().getWindow());
+        dialog.showAndWait().ifPresent(result -> {
+            LOG.debug("Logging configuration updated");
+            logConfiguration = result;
+            loggingService.configure(source, logConfiguration);
+        });
     }
 
     private void showAlert(String message) {
