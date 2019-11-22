@@ -1,5 +1,6 @@
 package com.dynamicgravitysystems.at1config;
 
+import com.dynamicgravitysystems.at1config.services.DataLoggingService;
 import com.dynamicgravitysystems.at1config.services.SerialServiceManager;
 import com.dynamicgravitysystems.at1config.windows.MainApplicationWindow;
 import javafx.application.Application;
@@ -22,6 +23,7 @@ public class AT1ConfigApplication extends Application {
     @Override
     public void stop() throws Exception {
         SerialServiceManager.shutdown();
+        DataLoggingService.shutdown();
         Platform.exit();
     }
 }

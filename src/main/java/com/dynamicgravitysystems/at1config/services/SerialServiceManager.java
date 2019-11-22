@@ -12,16 +12,21 @@ import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.Marker;
+import org.apache.logging.log4j.MarkerManager;
 
+import java.util.Arrays;
 import java.util.EnumMap;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.stream.Collectors;
 
 public enum SerialServiceManager {
     INSTANCE;
 
     private final static Logger LOG = LogManager.getLogger(SerialServiceManager.class.getName());
+    private final static Marker COMMAND_MARK = MarkerManager.getMarker("COMMAND");
     private final ExecutorService executor = Executors.newFixedThreadPool(2);
     private final Map<DataSource, Observable<SerialMessage>> publishers = new EnumMap<>(DataSource.class);
     private final Map<DataSource, SerialPortRunnable> connections = new EnumMap<>(DataSource.class);
@@ -89,6 +94,8 @@ public enum SerialServiceManager {
         connections.remove(source);
         publishers.remove(source);
 
+        DataLoggingService.getInstance().flush(source);
+
         Platform.runLater(() -> connectedProperties.get(source).set(false));
     }
 
@@ -112,7 +119,7 @@ public enum SerialServiceManager {
             return false;
         }
 
-        LOG.info("Sending command '{}' to serial source {}", command.getCommand(), source);
+        LOG.info(COMMAND_MARK, "Sending command {} <{}> to source: {}", command, command.getCommand(), source);
         return connections.get(source).writeToSerial(command.getCommand());
     }
 
@@ -121,6 +128,7 @@ public enum SerialServiceManager {
             LOG.warn("Source {} is not connected, cannot send command", source);
             return false;
         }
+        LOG.info(COMMAND_MARK, "Sending raw command <{}> to source: {}", command, source);
         return connections.get(source).writeToSerial(command);
     }
 
@@ -135,11 +143,7 @@ public enum SerialServiceManager {
     public void refreshCommPorts() {
         if (!commPorts.isEmpty())
             commPorts.clear();
-
-        for (SerialPort port : SerialPort.getCommPorts()) {
-            commPorts.add(port.getSystemPortName());
-        }
+        commPorts.addAll(Arrays.stream(SerialPort.getCommPorts()).map(SerialPort::getSystemPortName).collect(Collectors.toList()));
         commPorts.sort(String::compareTo);
-
     }
 }
