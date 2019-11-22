@@ -6,6 +6,7 @@ import java.net.URL;
 
 public enum ResourceManager {
     LOGO_PNG("/logo.png"),
+    ICON_WRENCH("/wrench.png"),
     DEFAULT_STYLE("/styles.css");
 
     private final String path;
