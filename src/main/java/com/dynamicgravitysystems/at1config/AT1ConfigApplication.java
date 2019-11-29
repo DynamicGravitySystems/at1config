@@ -23,7 +23,7 @@ public class AT1ConfigApplication extends Application {
     @Override
     public void stop() throws Exception {
         SerialServiceManager.shutdown();
-        DataLoggingService.shutdown();
+        DataLoggingService.INSTANCE.shutdown();
         Platform.exit();
     }
 }

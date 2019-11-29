@@ -4,7 +4,6 @@ import com.dynamicgravitysystems.at1config.util.DataSource;
 import com.dynamicgravitysystems.at1config.util.LoggingServiceConfiguration;
 
 import java.io.IOException;
-import java.nio.file.Path;
 
 public interface LoggingService {
 
@@ -13,5 +12,7 @@ public interface LoggingService {
     void log(DataSource source, String data) throws IOException;
 
     void flush(DataSource source) throws IOException;
+
+    void shutdown() throws IOException;
 
 }

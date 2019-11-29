@@ -5,112 +5,61 @@ import com.dynamicgravitysystems.at1config.util.LoggingServiceConfiguration;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import java.io.BufferedWriter;
 import java.io.IOException;
-import java.io.Writer;
-import java.nio.file.Files;
-import java.nio.file.OpenOption;
-import java.nio.file.Path;
-import java.nio.file.StandardOpenOption;
-import java.util.ArrayList;
 import java.util.EnumMap;
-import java.util.List;
+import java.util.Map;
 
 public enum DataLoggingService implements LoggingService {
     INSTANCE;
 
     private static final Logger LOG = LogManager.getLogger(DataLoggingService.class.getName());
-    private static final String ENDL = "\r\n";
-    private final EnumMap<DataSource, BufferedWriter> logWriters = new EnumMap<>(DataSource.class);
+    private final DataLogger NOOP_LOGGER = new NoopDataLogger();
+    private final EnumMap<DataSource, DataLogger> dataLoggers = new EnumMap<>(DataSource.class);
 
     DataLoggingService() {
-
-    }
-
-    public void setLogFile(DataSource source, Path file) throws IOException {
-
-        BufferedWriter writer = Files.newBufferedWriter(file, StandardOpenOption.CREATE, StandardOpenOption.APPEND);
-        if (logWriters.containsKey(source)) {
-            logWriters.get(source).close();
-        }
-
-        logWriters.put(source, writer);
-
-        LOG.info("Set log file for {} to {}", source, file);
+        for (DataSource source : DataSource.values())
+            dataLoggers.put(source, NOOP_LOGGER);
     }
 
     @Override
-    public void configure(DataSource source, LoggingServiceConfiguration configuration) {
-        // compute a new bufferedWriter for the logWriters map
-        logWriters.compute(source, (src, writer) -> {
-            if (writer != null) {
-                try {
-                    writer.flush();
-                    writer.close();
-                } catch (IOException ignored) {
-                }
-            }
-            if (configuration.getFilePath() == null) {
-                return null;
-            }
-            if (!configuration.isEnabled()) {
-                return null;
-            }
+    public synchronized void configure(DataSource source, LoggingServiceConfiguration configuration) {
+        dataLoggers.compute(source, (dataSource, dataLogger) -> {
+            assert dataLogger != null;
+            dataLogger.close();
 
-            List<OpenOption> options = new ArrayList<>();
-            options.add(StandardOpenOption.CREATE);
-            options.add(StandardOpenOption.WRITE);
-            if (configuration.isAppend())
-                options.add(StandardOpenOption.APPEND);
-            else
-                options.add(StandardOpenOption.TRUNCATE_EXISTING);
+            if (!configuration.isEnabled()) {
+                LOG.debug("No-Op Logger added (configuration state is disabled)");
+                return NOOP_LOGGER;
+            }
 
             try {
-                return Files.newBufferedWriter(configuration.getFilePath(), options.toArray(OpenOption[]::new));
+                LOG.debug("Instantiated new Data Logger for source {}", source);
+                return new DataLoggerImpl(configuration.getFilePath(), configuration.isAppend(), configuration.getLineEnding());
             } catch (IOException e) {
-                return null;
+                LOG.error("Error instantiating new DataLogger", e);
+                return NOOP_LOGGER;
             }
         });
     }
 
     @Override
-    public void log(DataSource source, String data) throws IOException {
-        BufferedWriter writer = logWriters.get(source);
-        if (writer == null)
-            return;
-
-        synchronized (logWriters.get(source)) {
-            writer.write(data + ENDL);
-        }
+    public void log(final DataSource source, final String data) {
+        dataLoggers.entrySet().stream()
+                .filter((entry) -> entry.getKey() == source)
+                .map(Map.Entry::getValue)
+                .findFirst()
+                .ifPresent(value -> value.log(data));
     }
 
     @Override
     public void flush(DataSource source) {
-        try {
-            Writer writer = logWriters.get(source);
-            if (writer != null)
-                writer.flush();
-        } catch (IOException e) {
-            LOG.debug("Unable to flush writer for data source {}", source, e);
-
-        }
+        dataLoggers.forEach(((dataSource, dataLogger) -> dataLogger.flush()));
     }
 
-    public void closeAll() {
-        logWriters.forEach((source, writer) -> {
-            try {
-                writer.flush();
-                writer.close();
-                LOG.debug("Closed writer for source: {}", source);
-            } catch (IOException e) {
-                LOG.error("Unable to close writer for source: {}", source, e);
-            }
-        });
-    }
-
-    public static void shutdown() {
+    @Override
+    public void shutdown() {
         LOG.info("Closing all open data log files");
-        getInstance().closeAll();
+        dataLoggers.forEach(((dataSource, dataLogger) -> dataLogger.close()));
     }
 
     public static DataLoggingService getInstance() {
