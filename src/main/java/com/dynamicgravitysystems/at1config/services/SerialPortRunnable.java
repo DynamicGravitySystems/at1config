@@ -10,13 +10,12 @@ import org.apache.logging.log4j.Logger;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 public class SerialPortRunnable implements Runnable {
     private final Logger log;
     private final SerialPort port;
     private final PublishSubject<SerialMessage> messageSubject = PublishSubject.create();
-    private final AtomicBoolean stopped = new AtomicBoolean(false);
+    private volatile boolean stopped = false;
 
 
     SerialPortRunnable(final String device, final SerialConnectionParameters connectionParameters) {
@@ -43,12 +42,12 @@ public class SerialPortRunnable implements Runnable {
             log.error("Failed to open serial port");
             messageSubject.onNext(SerialMessage.failed());
             messageSubject.onError(new RuntimeException("Failed to open serial port"));
-            stopped.set(true);
+            stopped = true;
         }
 
         try (BufferedReader reader = new BufferedReader(new InputStreamReader(port.getInputStream()))) {
             String currentLine;
-            while (!stopped.get()) {
+            while (!stopped) {
                 try {
                     currentLine = reader.readLine();
                     if (currentLine != null) {
@@ -69,11 +68,11 @@ public class SerialPortRunnable implements Runnable {
     }
 
     void cancel() {
-        stopped.set(true);
+        stopped = true;
     }
 
     boolean isRunning() {
-        return !stopped.get();
+        return !stopped;
     }
 
     synchronized boolean writeToSerial(String value) {
@@ -91,7 +90,7 @@ public class SerialPortRunnable implements Runnable {
         return true;
     }
 
-    private void cleanup() {
+    private synchronized void cleanup() {
         log.info("Cleaning up serial connection");
         if (port.isOpen())
             port.closePort();
