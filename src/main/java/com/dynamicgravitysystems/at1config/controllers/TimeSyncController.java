@@ -1,6 +1,9 @@
 package com.dynamicgravitysystems.at1config.controllers;
 
 import com.dynamicgravitysystems.at1config.command.MarineSensorCommand;
+import com.dynamicgravitysystems.at1config.controls.LineChartControl;
+import com.dynamicgravitysystems.at1config.models.SyncState;
+import com.dynamicgravitysystems.at1config.models.SyncValue;
 import com.dynamicgravitysystems.at1config.parsing.DataParser;
 import com.dynamicgravitysystems.at1config.services.SerialMessage;
 import com.dynamicgravitysystems.at1config.services.SerialServiceManager;
@@ -9,7 +12,6 @@ import com.dynamicgravitysystems.at1config.util.DataSource;
 import com.dynamicgravitysystems.common.filters.Filter;
 import com.dynamicgravitysystems.common.filters.MovingAverageFilter;
 import com.dynamicgravitysystems.common.gravity.DataField;
-import com.dynamicgravitysystems.common.gravity.GravityReading;
 import com.dynamicgravitysystems.common.gravity.MarineGravityReading;
 import io.reactivex.Observable;
 import io.reactivex.disposables.CompositeDisposable;
@@ -18,19 +20,12 @@ import io.reactivex.schedulers.Schedulers;
 import javafx.application.Platform;
 import javafx.beans.property.*;
 import javafx.fxml.FXML;
-import javafx.scene.chart.LineChart;
-import javafx.scene.chart.NumberAxis;
-import javafx.scene.chart.XYChart;
 import javafx.scene.control.*;
-import javafx.util.StringConverter;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.net.URL;
-import java.time.Instant;
-import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.ResourceBundle;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -58,65 +53,7 @@ public class TimeSyncController extends BaseController {
     @FXML CheckBox cbFreqDeriv;
     @FXML CheckBox cbElecTemp;
 
-    @FXML LineChart<Long, Double> chartSync;
-    @FXML NumberAxis chartXaxis;
-    @FXML NumberAxis chartYaxis;
-
-    private enum SyncState {
-        DATA("Data Mode (Default)"),
-        VIEW("Viewing Synchronization"),
-        SYNC("Auto-Sync Active");
-
-        private final String displayValue;
-
-        SyncState(String displayValue) {
-            this.displayValue = displayValue;
-        }
-
-        @Override
-        public String toString() {
-            return displayValue;
-        }
-    }
-
-    private static class SyncValue {
-        private final int timeDifference;
-        private final int freqDerivative;
-        private final int adjustmentSteps;
-        private final double elecTemperature;
-        private final SyncState state;
-
-
-        private SyncValue(int timeDifference, int freqDerivative, int adjustmentSteps, double elecTemperature, SyncState state) {
-            this.timeDifference = timeDifference;
-            this.freqDerivative = freqDerivative;
-            this.adjustmentSteps = adjustmentSteps;
-            this.elecTemperature = elecTemperature;
-            this.state = state;
-        }
-
-        static SyncValue fromGravityReading(GravityReading reading) {
-
-            int adjStateValue = (int) reading.getValue(DataField.ADJUSTMENT_ENABLED);
-            SyncState syncState;
-            switch (adjStateValue) {
-                case 0:
-                    syncState = SyncState.VIEW;
-                    break;
-                case 1:
-                    syncState = SyncState.SYNC;
-                    break;
-                default:
-                    syncState = SyncState.DATA;
-            }
-
-            return new SyncValue((int) reading.getValue(DataField.TIME_DIFF, -1),
-                    (int) reading.getValue(DataField.FREQ_DERIVATIVE, -1),
-                    (int) reading.getValue(DataField.ADJUSTMENT_STEPS, -1),
-                    reading.getValue(DataField.ELEC_TEMP),
-                    syncState);
-        }
-    }
+    @FXML LineChartControl chart;
 
 
     private final ObjectProperty<SyncState> syncStateProperty = new SimpleObjectProperty<>(SyncState.DATA);
@@ -125,21 +62,19 @@ public class TimeSyncController extends BaseController {
     private final IntegerProperty frequencyDerivative = new SimpleIntegerProperty(0);
     private final IntegerProperty adjustmentSteps = new SimpleIntegerProperty(0);
     private final DoubleProperty elecTemp = new SimpleDoubleProperty(0);
-    private final LongProperty chartWidth = new SimpleLongProperty(1800);
 
     private final Filter temperatureFilter = new MovingAverageFilter(200);
 
     private final SerialServiceManager serialManager = SerialServiceManager.getInstance();
     private final DataParser processor = DataParser.INSTANCE;
 
-    private final XYChart.Series<Long, Double> timeDiffSeries = new XYChart.Series<>();
-    private final XYChart.Series<Long, Double> freqDerivativeSeries = new XYChart.Series<>();
-    private final XYChart.Series<Long, Double> elecTempSeries = new XYChart.Series<>();
-
     private final CompositeDisposable subscriptions = new CompositeDisposable();
 
     private ConnectableObservable<SyncValue> baseSource;
 
+    private final String etempSeries = "Electronics Temperature";
+    private final String freqSeries = "Frequency Derivative";
+    private final String timeSeries = "Time Difference";
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
@@ -170,16 +105,11 @@ public class TimeSyncController extends BaseController {
         txtPlotWidth.textProperty().set("30");
         lblSyncStatus.textProperty().bind(syncStateProperty.asString());
 
-        chartSync.getData().add(timeDiffSeries);
-        cbTimeDiff.setSelected(true);
-        chartSync.getData().add(freqDerivativeSeries);
-        cbFreqDeriv.setSelected(true);
-        chartSync.getData().add(elecTempSeries);
-        cbElecTemp.setSelected(true);
+        chart.addSeries(etempSeries, freqSeries, timeSeries);
 
-        cbFreqDeriv.setOnAction(event -> toggleSeries(freqDerivativeSeries.getName()));
-        cbTimeDiff.setOnAction(event -> toggleSeries(timeDiffSeries.getName()));
-        cbElecTemp.setOnAction(event -> toggleSeries(elecTempSeries.getName()));
+        cbFreqDeriv.setOnAction(event -> chart.toggleSeries(freqSeries));
+        cbTimeDiff.setOnAction(event -> chart.toggleSeries(timeSeries));
+        cbElecTemp.setOnAction(event -> chart.toggleSeries(etempSeries));
 
         baseSource = serialManager.getSubject(DataSource.GRAVITY)
                 .observeOn(Schedulers.io())
@@ -191,53 +121,23 @@ public class TimeSyncController extends BaseController {
                             final double elecTempValue = temperatureFilter.filter(
                                     processor.getCalibration()
                                             .getFieldCalibration(DataField.ELEC_TEMP)
-                                            .apply(sv.elecTemperature));
+                                            .apply(sv.getElecTemperature()));
                             Platform.runLater(() -> {
+                                chart.push(etempSeries, getEpochNow(), elecTempValue);
                                 elecTemp.setValue(elecTempValue);
-                                elecTempSeries.getData().add(new XYChart.Data<>(getEpochNow(), elecTempValue));
-                                updateChartBounds();
                             });
                         })
                         .doOnError(error -> LOG.error("Error parsing marine gravity reading, reason: {}", error.getMessage()))
-                        .onErrorResumeNext(Observable.empty())).publish();
+                        .onErrorResumeNext(Observable.empty()))
+                .publish();
 
         interpretStatus();
 
-        subscriptions.add(baseSource.skipWhile(reading -> reading.state == SyncState.DATA).subscribe(
+        subscriptions.add(baseSource.skipWhile(reading -> reading.getState() == SyncState.DATA).subscribe(
                 this::updateProperties
         ));
 
         baseSource.connect();
-
-        // TODO: Need routine to calculate upper/lower bounds dynamically
-        chartXaxis.setAutoRanging(false);
-        updateChartBounds();
-        chartXaxis.setTickUnit(300);
-        chartXaxis.setTickLabelFormatter(new StringConverter<>() {
-            final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("HH:mm");
-
-            @Override
-            public String toString(Number object) {
-                return Instant.ofEpochSecond(object.longValue()).atZone(ZoneOffset.UTC).format(formatter);
-            }
-
-            @Override
-            public Number fromString(String string) {
-                return null;
-            }
-        });
-
-        chartSync.setCreateSymbols(false);
-        timeDiffSeries.setName("Time Difference");
-        freqDerivativeSeries.setName("Frequency Derivative");
-        elecTempSeries.setName("Electronics Temperature");
-
-        // TODO: Implement drag-zoom
-//        chartSync.setOnMouseMoved(mouseEvent -> {
-//            System.out.println("Y pos: " + mouseEvent.getY());
-//            System.out.println("Y Value: " + chartYaxis.getValueForDisplay(mouseEvent.getY() - chartSync.getBaselineOffset()));
-//
-//        });
     }
 
     /**
@@ -248,9 +148,9 @@ public class TimeSyncController extends BaseController {
         LOG.info("Beginning sync routine");
 
         serialManager.sendCommand(MarineSensorCommand.FIND_FREQ_OFFSET);
-        subscriptions.add(baseSource.skipWhile(syncValue -> syncValue.state != SyncState.SYNC)
+        subscriptions.add(baseSource.skipWhile(syncValue -> syncValue.getState() != SyncState.SYNC)
                 .timeout(timeoutSeconds, TimeUnit.SECONDS)
-                .takeUntil(syncValue -> syncValue.state == SyncState.VIEW)
+                .takeUntil(syncValue -> syncValue.getState() == SyncState.VIEW)
                 .subscribe(syncValue -> {
                         },
                         error -> {
@@ -270,13 +170,13 @@ public class TimeSyncController extends BaseController {
     @FXML
     public void viewSync() {
         serialManager.sendCommand(MarineSensorCommand.DISPLAY_FREQ_OFFSET);
-        subscriptions.add(baseSource.skipWhile(syncValue -> syncValue.state != SyncState.VIEW)
+        subscriptions.add(baseSource.skipWhile(syncValue -> syncValue.getState() != SyncState.VIEW)
                 .timeout(timeoutSeconds, TimeUnit.SECONDS)
                 .take(1)
                 .subscribe(syncValue -> LOG.debug("View mode entered"),
                         error -> {
                             if (error instanceof TimeoutException) {
-                                showAlert(Alert.AlertType.ERROR, "Timeout occured waiting for sync mode switch");
+                                showAlert(Alert.AlertType.ERROR, "Timeout occurred waiting for sync mode switch");
                             } else {
                                 LOG.error(error);
                             }
@@ -287,9 +187,7 @@ public class TimeSyncController extends BaseController {
 
     @FXML
     public void clearChart() {
-        freqDerivativeSeries.getData().clear();
-        timeDiffSeries.getData().clear();
-        elecTempSeries.getData().clear();
+        chart.clear();
     }
 
     @FXML
@@ -298,31 +196,15 @@ public class TimeSyncController extends BaseController {
             long width = Long.parseLong(txtPlotWidth.getText().strip());
             if (width < 0)
                 throw new NumberFormatException();
-            chartWidth.set(width * 60);
+            chart.setChartWidth(width * 60);
         } catch (NumberFormatException ex) {
             LOG.warn("Invalid value supplied for plot width");
-            txtPlotWidth.setText("" + (chartWidth.getValue() / 60));
-        }
-
-    }
-
-    private void toggleSeries(String seriesName) {
-        for (XYChart.Series<Long, Double> series : chartSync.getData()) {
-            if (series.getName().equals(seriesName)) {
-                series.getNode().setVisible(!series.getNode().isVisible());
-                break;
-            }
+            txtPlotWidth.setText("" + chart.getChartWidth() / 60);
         }
     }
 
     private void sendAdjustment(int value) {
         serialManager.sendRawCommand(DataSource.GRAVITY, "e3_" + value + "\r\n");
-    }
-
-    private void updateChartBounds() {
-        long now = getEpochNow();
-        chartXaxis.setLowerBound(now - chartWidth.get());
-        chartXaxis.setUpperBound(now + 1);
     }
 
     private long getEpochNow() {
@@ -332,15 +214,15 @@ public class TimeSyncController extends BaseController {
     private void updateProperties(final SyncValue value) {
         final long time = ZonedDateTime.now().toEpochSecond();
 
-        final int tDiff = value.timeDifference;
-        final int fDeriv = value.freqDerivative;
+        final int tDiff = value.getTimeDifference();
+        final int fDeriv = value.getFreqDerivative();
 
         Platform.runLater(() -> {
             timeDifference.setValue(tDiff);
             frequencyDerivative.setValue(fDeriv);
-            adjustmentSteps.set(value.adjustmentSteps);
-            timeDiffSeries.getData().add(new XYChart.Data<>(time, (double) tDiff));
-            freqDerivativeSeries.getData().add(new XYChart.Data<>(time, (double) fDeriv));
+            adjustmentSteps.set(value.getAdjustmentSteps());
+            chart.push(timeSeries, time, tDiff);
+            chart.push(freqSeries, time, fDeriv);
         });
     }
 
@@ -353,12 +235,13 @@ public class TimeSyncController extends BaseController {
     }
 
     private void interpretStatus() {
-        subscriptions.add(baseSource.subscribe(syncValue -> {
-            if (syncValue.state != syncStateProperty.get()) {
-                LOG.debug("Setting new Sync State value of: " + syncValue.state);
-                Platform.runLater(() -> syncStateProperty.set(syncValue.state));
-            }
-        }));
+        subscriptions.add(baseSource
+                .distinctUntilChanged(SyncValue::getState)
+                .subscribe(syncValue -> {
+                    final SyncState state = syncValue.getState();
+                    LOG.debug("Setting new Sync State value of: " + state);
+                    Platform.runLater(() -> syncStateProperty.set(state));
+                }));
     }
 
     @Override
